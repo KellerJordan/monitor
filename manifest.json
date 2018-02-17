@@ -1,26 +1,12 @@
 {
     "manifest_version": 2,
-    "name": "tab2csv",
+    "name": "monitor",
     "version": "0.1",
-    // "content_scripts": [
-    //     {
-    //         "matches": [
-    //             "http://*/*",
-    //             "https://*/*"
-    //         ],
-    //         "js": [
-    //             "src/content.js"
-    //         ]
-    //     }
-    // ],
     "background": {
-        "scripts": ["src/background.js"]
+        "page": "src/background.html"
     },
     "permissions": [
-        "tabs",
-        "storage"
+        "tabs"
     ],
-    "browser_action": {
-        "default_popup": "src/browser_action/browser_action.html"
-    }
+    "content_security_policy": "script-src 'self' https://www.gstatic.com; object-src 'self';"
 }

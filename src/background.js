@@ -3,8 +3,30 @@ function formatTime(t) {
   return time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
 }
 
+var config = {
+  apiKey: API_KEY,
+  authDomain: "monitor-bebc5.firebaseapp.com",
+  databaseURL: "https://monitor-bebc5.firebaseio.com",
+  projectId: "monitor-bebc5",
+  storageBucket: "",
+  messagingSenderId: "519568914447"
+};
+firebase.initializeApp(config);
+
+var activityRef = firebase.database().ref('activity');
+
+function logSessionEvent(session, type) {
+  var newEventRef = activityRef.push();
+  newEventRef.set({
+    type: type,
+    time: type == 'START' ? session.startTime : session.endTime,
+    url: session.url
+  });
+}
+
 function onSessionStart(session) {
   console.log("START", formatTime(session.startTime), session.url);
+  logSessionEvent(session, 'START');
   // best way to do this??? maybe use a server instead of local storage
   // chrome.storage.local.get({browsing_activity: []}, function(result) {
   //   var browsing_activity = result.browsing_activity;
@@ -14,85 +36,7 @@ function onSessionStart(session) {
 
 function onSessionEnd(session) {
   console.log("END", formatTime(session.endTime), session.url);
+  logSessionEvent(session, 'END');
 }
+
 var stopTracking = startTrackingActivity(onSessionStart, onSessionEnd);
-
-
-function startTrackingActivity(onSessionStart, onSessionEnd) {
-  var session = { tabId: -1 };
-
-  function endSession() {
-    if (session.tabId !== -1) {
-      session.endTime = Date.now();
-      onSessionEnd && onSessionEnd(session);
-      session = { tabId: -1 };
-    }
-  }
-
-  function startSession(tab) {
-    endSession();
-    session = {
-      tabId: tab.id,
-      url: tab.url,
-      startTime: Date.now()
-    };
-    onSessionStart &&
-      onSessionStart({
-        tabId: session.tabId,
-        url: session.url,
-        startTime: session.startTime
-      });
-  }
-
-  function trackWindowFocus(windowId) {
-    if (windowId !== -1) {
-      chrome.windows.getCurrent({ populate: true }, function(window) {
-        var activeTab = window.tabs.filter(function(tab) {
-          return tab.active;
-        })[0];
-        if (activeTab && activeTab.id !== session.tabId) {
-          startSession(activeTab);
-        }
-      });
-    } else {
-      endSession();
-    }
-  }
-
-  function trackActiveTab(activeInfo) {
-    chrome.tabs.get(activeInfo.tabId, function(tab) {
-      if (!chrome.runtime.lastError && tab.id !== session.tabId) {
-        startSession(tab);
-      }
-    });
-  }
-
-  function trackTabUpdates(tabId, changeInfo, tab) {
-    if (
-      tab.active && changeInfo.status === "loading" && tab.url !== session.url
-    ) {
-      chrome.windows.get(tab.windowId, function(window) {
-        if (!chrome.runtime.lastError && window.focused) {
-          startSession(tab);
-        }
-      });
-    }
-  }
-
-  chrome.windows.onFocusChanged.addListener(trackWindowFocus);
-  chrome.tabs.onUpdated.addListener(trackTabUpdates);
-  chrome.tabs.onActivated.addListener(trackActiveTab);
-
-  return function stopTracking() {
-    chrome.windows.onFocusChanged.removeListener(trackWindowFocus);
-    chrome.tabs.onUpdated.removeListener(trackTabUpdates);
-    chrome.tabs.onActivated.removeListener(trackActiveTab);
-  };
-}
-
-if (typeof exports !== "undefined") {
-  if (typeof module !== "undefined" && module.exports) {
-    exports = module.exports = trackActivity;
-  }
-  exports.trackActivity = trackActivity;
-}
