@@ -33,7 +33,7 @@ function save_activity() {
         {type: 'END', time: '9-100-2', url: 'www.facebook.com'}
     ];
     var activity_str = arr_to_str(activity);
-    download("test.csv", activity_str);
+    download("browsing_activity.csv", activity_str);
 }
 
 document.getElementById('download').addEventListener('click', save_activity);

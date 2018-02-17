@@ -5,6 +5,11 @@ function formatTime(t) {
 
 function onSessionStart(session) {
   console.log("START", formatTime(session.startTime), session.url);
+  // best way to do this??? maybe use a server instead of local storage
+  // chrome.storage.local.get({browsing_activity: []}, function(result) {
+  //   var browsing_activity = result.browsing_activity;
+  //   browsing_activity.push()
+  // })
 }
 
 function onSessionEnd(session) {
