@@ -1,42 +1,37 @@
-function formatTime(t) {
-  var time = new Date(t);
-  return time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
-}
-
+// Initialize Firebase
 var config = {
   apiKey: API_KEY,
   authDomain: "monitor-bebc5.firebaseapp.com",
   databaseURL: "https://monitor-bebc5.firebaseio.com",
   projectId: "monitor-bebc5",
-  storageBucket: "",
+  storageBucket: "monitor-bebc5.appspot.com",
   messagingSenderId: "519568914447"
 };
+
 firebase.initializeApp(config);
+db = firebase.database().ref('activity');
 
-var activityRef = firebase.database().ref('activity');
-
-function logSessionEvent(session, type) {
-  var newEventRef = activityRef.push();
-  newEventRef.set({
-    type: type,
-    time: type == 'START' ? session.startTime : session.endTime,
-    url: session.url
+function logSessionEvent(session) {
+  var newEntry = activityRef.push();
+  newEntry.set({
+    url: session.url,
+    startTime: session.startTime,
+    endTime: session.endTime
   });
 }
 
+function formatTime(t) {
+  var time = new Date(t);
+  return time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
+}
+
 function onSessionStart(session) {
-  console.log("START", formatTime(session.startTime), session.url);
-  logSessionEvent(session, 'START');
-  // best way to do this??? maybe use a server instead of local storage
-  // chrome.storage.local.get({browsing_activity: []}, function(result) {
-  //   var browsing_activity = result.browsing_activity;
-  //   browsing_activity.push()
-  // })
+  console.log("OPEN", formatTime(session.startTime), session.url);
 }
 
 function onSessionEnd(session) {
-  console.log("END", formatTime(session.endTime), session.url);
-  logSessionEvent(session, 'END');
+  console.log("CLOSE", formatTime(session.endTime), session.url);
+  logSessionEvent(session);
 }
 
 var stopTracking = startTrackingActivity(onSessionStart, onSessionEnd);
